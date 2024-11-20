@@ -1,19 +1,7 @@
 package main
 
-import (
-	"fmt"
-	"time"
-)
+import "github.com/AmirMirzayi/relay/cmd"
 
 func main() {
-	go func() {
-		if err := Serve(); err != nil {
-			fmt.Println(err)
-		}
-	}()
-
-	time.Sleep(time.Second)
-	if err := Request(); err != nil {
-		fmt.Println(err)
-	}
+	cmd.Execute()
 }
