@@ -51,7 +51,7 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(&port, "port", "p", config.DefaultPort, "application running port")
 	rootCmd.PersistentFlags().IntVarP(&timeoutInSecond, "timeout", "t", int(config.DefaultTimeout/time.Second), "connection timeout in second")
 
-	sendCmd.PersistentFlags().IPVarP(&ip, "ip", "i", net.ParseIP(config.DefaultIP), "host address")
+	sendCmd.PersistentFlags().IPVarP(&ip, "ip", "i", net.ParseIP(config.DefaultIP), "receiver machine ip address")
 	sendCmd.MarkPersistentFlagRequired("ip")
 
 	rootCmd.AddCommand(receiveCmd)

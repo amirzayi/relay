@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -36,19 +35,24 @@ func Receive(ip net.IP, port int, timeout time.Duration) error {
 	}
 
 	for _, file := range files {
+		receiveFile(conn, file)
+	}
 
-		f, err := os.Create(file.Name)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
+	return nil
+}
 
-		if _, err = io.CopyN(f, conn, file.Size); err != nil {
-			if errors.Is(err, io.EOF) {
-				continue
-			}
-			return err
-		}
+func receiveFile(conn net.Conn, file config.File) error {
+	f, err := os.Create(file.Name)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err = io.CopyN(f, conn, file.Size); err != nil {
+		// if errors.Is(err, io.EOF) {
+		// 	continue
+		// }
+		return err
 	}
 
 	return nil
