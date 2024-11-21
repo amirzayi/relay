@@ -85,8 +85,16 @@ func sendFile(conn net.Conn, file config.File) error {
 	}
 	defer f.Close()
 
-	if _, err = io.Copy(conn, f); err != nil {
-		if !errors.Is(err, io.EOF) {
+	buffer := make([]byte, config.DefaultChunkSize)
+	for {
+		n, err := f.Read(buffer)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			return err
+		}
+		if _, err = conn.Write(buffer[:n]); err != nil {
 			return err
 		}
 	}

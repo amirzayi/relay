@@ -19,23 +19,15 @@ func Receive(ip net.IP, port int, timeout time.Duration) error {
 	}
 	defer conn.Close()
 
-	var dataLen uint32
-	if err = binary.Read(conn, binary.BigEndian, &dataLen); err != nil {
-		return err
-	}
-
-	buffer := make([]byte, dataLen)
-	if _, err = conn.Read(buffer); err != nil {
-		return err
-	}
-
-	var files config.Files
-	if err = json.Unmarshal(buffer, &files); err != nil {
+	files, err := receiveFileInfo(conn)
+	if err != nil {
 		return err
 	}
 
 	for _, file := range files {
-		receiveFile(conn, file)
+		if err = receiveFile(conn, file); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -44,16 +36,50 @@ func Receive(ip net.IP, port int, timeout time.Duration) error {
 func receiveFile(conn net.Conn, file config.File) error {
 	f, err := os.Create(file.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create file %s, %v", file.Name, err)
 	}
 	defer f.Close()
 
-	if _, err = io.CopyN(f, conn, file.Size); err != nil {
-		// if errors.Is(err, io.EOF) {
-		// 	continue
-		// }
-		return err
+	buffer := make([]byte, config.DefaultChunkSize)
+	var written int64 = 0
+	byteToRead := config.DefaultChunkSize
+
+	for written < file.Size {
+
+		if config.DefaultChunkSize > file.Size-written {
+			byteToRead = int(file.Size - written)
+		}
+		n, err := io.ReadFull(conn, buffer[:byteToRead])
+		if err != nil {
+			return fmt.Errorf("failed to read buffer from network, %v", err)
+		}
+
+		_, err = f.Write(buffer[:n])
+		if err != nil {
+			return fmt.Errorf("failed to write buffer into file, %v", err)
+		}
+
+		written += int64(n)
 	}
 
 	return nil
+}
+
+func receiveFileInfo(conn net.Conn) (config.Files, error) {
+	var dataLen uint32
+	if err := binary.Read(conn, binary.BigEndian, &dataLen); err != nil {
+		return nil, fmt.Errorf("failed to read files info, %v", err)
+	}
+
+	buffer := make([]byte, dataLen)
+	if _, err := conn.Read(buffer); err != nil {
+		return nil, fmt.Errorf("failed to read files info, %v", err)
+	}
+
+	var files config.Files
+	if err := json.Unmarshal(buffer, &files); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal files info, %v", err)
+	}
+
+	return files, nil
 }
