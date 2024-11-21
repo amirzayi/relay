@@ -31,6 +31,10 @@ func Serve(ip net.IP, port int, timeout time.Duration, pathes ...string) error {
 	}
 	defer conn.Close()
 
+	if err = sendFilesInfo(conn, files); err != nil {
+		return err
+	}
+
 	for _, file := range files {
 		if err = sendFile(conn, file); err != nil {
 			return err
@@ -70,7 +74,6 @@ func sendFilesInfo(conn net.Conn, files config.Files) error {
 	if err != nil {
 		return err
 	}
-
 	if _, err = conn.Write(bytes); err != nil {
 		return err
 	}
