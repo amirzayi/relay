@@ -45,19 +45,21 @@ func Serve(ip net.IP, port int, timeout time.Duration, pathes ...string) error {
 }
 
 func getFilesByPathes(pathes ...string) (config.Files, error) {
+	// preallocate files to args lengths
+	// but, what if an arg was directory
 	files := make(config.Files, 0, len(pathes))
 
 	for _, path := range pathes {
 		fileInfo, err := os.Stat(path)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to read information of %s, %v", path, err)
 		}
-		fi := config.File{
+
+		files = append(files, config.File{
 			Name: fileInfo.Name(),
 			Size: fileInfo.Size(),
 			Path: path,
-		}
-		files = append(files, fi)
+		})
 	}
 
 	return files, nil
@@ -66,16 +68,15 @@ func getFilesByPathes(pathes ...string) (config.Files, error) {
 func sendFilesInfo(conn net.Conn, files config.Files) error {
 	bytes, err := json.Marshal(files)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to prepare transmit information, %v", err)
 	}
 
 	dataLen := uint32(len(bytes))
-	err = binary.Write(conn, binary.BigEndian, dataLen)
-	if err != nil {
-		return err
+	if err = binary.Write(conn, binary.BigEndian, dataLen); err != nil {
+		return fmt.Errorf("failed to write data size over network, %v", err)
 	}
 	if _, err = conn.Write(bytes); err != nil {
-		return err
+		return fmt.Errorf("failed to write transmit information over network, %v", err)
 	}
 
 	return nil
@@ -84,7 +85,7 @@ func sendFilesInfo(conn net.Conn, files config.Files) error {
 func sendFile(conn net.Conn, file config.File) error {
 	f, err := os.Open(file.Path)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load file %s, %v", file.Path, err)
 	}
 	defer f.Close()
 
@@ -95,10 +96,10 @@ func sendFile(conn net.Conn, file config.File) error {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			return err
+			return fmt.Errorf("failed to buffering file %s, %v", file.Path, err)
 		}
 		if _, err = conn.Write(buffer[:n]); err != nil {
-			return err
+			return fmt.Errorf("failed to write over network, %v", err)
 		}
 	}
 
