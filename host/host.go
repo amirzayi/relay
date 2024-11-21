@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/AmirMirzayi/relay/config"
@@ -55,11 +56,21 @@ func getFilesByPathes(pathes ...string) (config.Files, error) {
 			return nil, fmt.Errorf("failed to read information of %s, %v", path, err)
 		}
 
-		files = append(files, config.File{
-			Name: fileInfo.Name(),
-			Size: fileInfo.Size(),
-			Path: path,
-		})
+		if !fileInfo.IsDir() {
+			files = append(files, config.File{
+				Name: fileInfo.Name(),
+				Size: fileInfo.Size(),
+				Path: path,
+			})
+			continue
+		}
+
+		// read directory files recursively
+		dirFiles, err := readDirectoryFiles(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve files on directory %s, %v", path, err)
+		}
+		files = append(files, dirFiles...)
 	}
 
 	return files, nil
@@ -104,6 +115,41 @@ func sendFile(conn net.Conn, file config.File) error {
 	}
 
 	return nil
+}
+
+func readDirectoryFiles(path string, parent ...string) (config.Files, error) {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve directory data on %s, %v", path, err)
+	}
+
+	var files []config.File
+
+	for _, entry := range entries {
+		entryInfo, err := entry.Info()
+		if err != nil {
+			return nil, fmt.Errorf("failed to load info of %s, %v", entry.Name(), err)
+		}
+
+		if !entryInfo.IsDir() {
+			fPath := filepath.Join(parent...)
+			fPath = filepath.Join(fPath, filepath.Base(path), entry.Name())
+			files = append(files, config.File{
+				Name: fPath,
+				Size: entryInfo.Size(),
+				Path: filepath.Join(path, entry.Name()),
+			})
+			continue
+		}
+
+		innerFiles, err := readDirectoryFiles(filepath.Join(path, entry.Name()), filepath.Base(path))
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, innerFiles...)
+	}
+
+	return files, nil
 }
 
 func listenWithTimeout(listener net.Listener, dur time.Duration) (net.Conn, error) {
