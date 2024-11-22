@@ -11,9 +11,10 @@ import (
 	"time"
 
 	"github.com/AmirMirzayi/relay/config"
+	"github.com/AmirMirzayi/relay/utils"
 )
 
-func Receive(ip net.IP, port int, timeout time.Duration) error {
+func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration) error {
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), timeout)
 	if err != nil {
 		return err
@@ -26,7 +27,7 @@ func Receive(ip net.IP, port int, timeout time.Duration) error {
 	}
 
 	for _, file := range files {
-		if err = receiveFile(conn, file); err != nil {
+		if err = receiveFile(conn, file, progressbarWidth); err != nil {
 			return err
 		}
 	}
@@ -34,7 +35,7 @@ func Receive(ip net.IP, port int, timeout time.Duration) error {
 	return nil
 }
 
-func receiveFile(conn net.Conn, file config.File) error {
+func receiveFile(conn net.Conn, file config.File, progressbarWidth int) error {
 	fileDir := ""
 	if len(file.Parents) > 0 {
 		fileDir := filepath.Join(file.Parents...)
@@ -50,26 +51,33 @@ func receiveFile(conn net.Conn, file config.File) error {
 	}
 	defer f.Close()
 
+	shortedFileName := utils.ShortedString(file.Name, 10, 6, 4)
+
 	buffer := make([]byte, config.DefaultChunkSize)
-	var written int64 = 0
+	var totalBytesRead, totalBytesWritten int64
 	byteToRead := config.DefaultChunkSize
 
-	for written < file.Size {
-		if config.DefaultChunkSize > file.Size-written {
-			byteToRead = int(file.Size - written)
+	for totalBytesRead < file.Size {
+		if config.DefaultChunkSize > file.Size-totalBytesRead {
+			byteToRead = int(file.Size - totalBytesRead)
 		}
 		n, err := io.ReadFull(conn, buffer[:byteToRead])
 		if err != nil {
 			return fmt.Errorf("failed to read buffer from network, %v", err)
 		}
 
-		_, err = f.Write(buffer[:n])
+		m, err := f.Write(buffer[:n])
 		if err != nil {
 			return fmt.Errorf("failed to write buffer into file, %v", err)
 		}
 
-		written += int64(n)
+		totalBytesRead += int64(n)
+		totalBytesWritten += int64(m)
+
+		receivedPercent := int(totalBytesWritten * 100 / file.Size)
+		utils.DrawProgressBar(receivedPercent, progressbarWidth, shortedFileName)
 	}
+	fmt.Printf("\r%s ✓\n", file.Name)
 
 	return nil
 }

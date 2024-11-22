@@ -11,6 +11,6 @@ var receiveCmd = &cobra.Command{
 	Use:   "receive",
 	Short: "receive file",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return client.Receive(ip, port, time.Duration(timeoutInSecond)*time.Second)
+		return client.Receive(ip, port, progressbarWidth, time.Duration(timeoutInSecond)*time.Second)
 	},
 }

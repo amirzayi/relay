@@ -41,18 +41,20 @@ func Execute() {
 }
 
 var (
-	ip              net.IP
-	port            int
-	timeoutInSecond int
+	ip net.IP
+	port,
+	timeoutInSecond,
+	progressbarWidth int
 )
 
 func init() {
 
 	rootCmd.PersistentFlags().IntVarP(&port, "port", "p", config.DefaultPort, "application running port")
 	rootCmd.PersistentFlags().IntVarP(&timeoutInSecond, "timeout", "t", int(config.DefaultTimeout/time.Second), "connection timeout in second")
-
-	sendCmd.PersistentFlags().IPVarP(&ip, "ip", "i", net.ParseIP(config.DefaultIP), "receiver machine ip address")
-	sendCmd.MarkPersistentFlagRequired("ip")
+	rootCmd.PersistentFlags().IntVarP(&progressbarWidth, "width", "w", config.ProgressbarWidth, "progress bar width[must divisible to 100]")
+	sendCmd.PersistentFlags().IPVarP(&ip, "ip", "i", config.DefaultIP(), "sender machine binding ip address")
+	receiveCmd.PersistentFlags().IPVarP(&ip, "ip", "i", nil, "sender machine ip address")
+	receiveCmd.MarkPersistentFlagRequired("ip")
 
 	rootCmd.AddCommand(receiveCmd)
 	rootCmd.AddCommand(sendCmd)

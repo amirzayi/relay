@@ -12,9 +12,10 @@ import (
 	"time"
 
 	"github.com/AmirMirzayi/relay/config"
+	"github.com/AmirMirzayi/relay/utils"
 )
 
-func Serve(ip net.IP, port int, timeout time.Duration, pathes ...string) error {
+func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, pathes ...string) error {
 	files, err := getFilesByPathes(pathes...)
 	if err != nil {
 		return err
@@ -37,7 +38,7 @@ func Serve(ip net.IP, port int, timeout time.Duration, pathes ...string) error {
 	}
 
 	for _, file := range files {
-		if err = sendFile(conn, file); err != nil {
+		if err = sendFile(conn, file, progressbarWidth); err != nil {
 			return err
 		}
 	}
@@ -58,15 +59,15 @@ func getFilesByPathes(pathes ...string) (config.Files, error) {
 
 		if !fileInfo.IsDir() {
 			files = append(files, config.File{
-				Name: fileInfo.Name(),
-				Size: fileInfo.Size(),
-				Path: path,
+				Name:    fileInfo.Name(),
+				Size:    fileInfo.Size(),
+				Path:    path,
+				Parents: nil,
 			})
 			continue
 		}
 
-		// read directory files recursively
-		dirFiles, err := readDirectoryFiles(path)
+		dirFiles, err := readDirectoryFilesRecursively(path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve files on directory %s, %v", path, err)
 		}
@@ -93,13 +94,16 @@ func sendFilesInfo(conn net.Conn, files config.Files) error {
 	return nil
 }
 
-func sendFile(conn net.Conn, file config.File) error {
+func sendFile(conn net.Conn, file config.File, progressbarWidth int) error {
 	f, err := os.Open(file.Path)
 	if err != nil {
 		return fmt.Errorf("failed to load file %s, %v", file.Path, err)
 	}
 	defer f.Close()
 
+	shortedFileName := utils.ShortedString(file.Name, 10, 6, 4)
+
+	var totalByteSent int64
 	buffer := make([]byte, config.DefaultChunkSize)
 	for {
 		n, err := f.Read(buffer)
@@ -109,15 +113,24 @@ func sendFile(conn net.Conn, file config.File) error {
 			}
 			return fmt.Errorf("failed to buffering file %s, %v", file.Path, err)
 		}
-		if _, err = conn.Write(buffer[:n]); err != nil {
+
+		byteSent, err := conn.Write(buffer[:n])
+		if err != nil {
 			return fmt.Errorf("failed to write over network, %v", err)
 		}
+
+		totalByteSent += int64(byteSent)
+		sentPercent := int(totalByteSent * 100 / file.Size)
+
+		utils.DrawProgressBar(sentPercent, progressbarWidth, shortedFileName)
 	}
+	fmt.Printf("\r%s ✓\n", file.Name)
 
 	return nil
 }
 
-func readDirectoryFiles(path string, parent ...string) (config.Files, error) {
+// readDirectoryFilesRecursively retrieve directory and subdirectories files
+func readDirectoryFilesRecursively(path string, parents ...string) (config.Files, error) {
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve directory data on %s, %v", path, err)
@@ -132,17 +145,17 @@ func readDirectoryFiles(path string, parent ...string) (config.Files, error) {
 		}
 
 		if !entryInfo.IsDir() {
-			fPath := filepath.Join(parent...)
-			fPath = filepath.Join(fPath, filepath.Base(path), entry.Name())
 			files = append(files, config.File{
-				Name: fPath,
-				Size: entryInfo.Size(),
-				Path: filepath.Join(path, entry.Name()),
+				Name:    entry.Name(),
+				Size:    entryInfo.Size(),
+				Path:    filepath.Join(path, entry.Name()),
+				Parents: append(parents, filepath.Base(path)),
 			})
 			continue
 		}
 
-		innerFiles, err := readDirectoryFiles(filepath.Join(path, entry.Name()), filepath.Base(path))
+		parents = append(parents, filepath.Base(path))
+		innerFiles, err := readDirectoryFilesRecursively(filepath.Join(path, entry.Name()), parents...)
 		if err != nil {
 			return nil, err
 		}

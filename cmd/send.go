@@ -14,6 +14,7 @@ var sendCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return host.Serve(ip,
 			port,
+			progressbarWidth,
 			time.Duration(timeoutInSecond)*time.Second,
 			args...)
 	},
