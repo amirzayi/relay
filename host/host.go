@@ -21,6 +21,8 @@ func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, pathes 
 		return err
 	}
 
+	fmt.Printf("Preparing to send %d files with %s\n", len(files), files.HumanReadableTotalSize())
+
 	listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: ip, Port: port})
 	if err != nil {
 		return err

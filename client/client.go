@@ -15,16 +15,21 @@ import (
 )
 
 func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration) error {
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, port), timeout)
+	serverAddress := fmt.Sprintf("%s:%d", ip, port)
+	fmt.Printf("Connecting to %s...", serverAddress)
+	conn, err := net.DialTimeout("tcp", serverAddress, timeout)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
+	fmt.Printf("\rSuccessfully Connected to %s ✓\n", serverAddress)
 
 	files, err := receiveFileInfo(conn)
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("Preparing to receive %d files with %s\n", len(files), files.HumanReadableTotalSize())
 
 	for _, file := range files {
 		if err = receiveFile(conn, file, progressbarWidth); err != nil {

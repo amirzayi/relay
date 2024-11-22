@@ -3,6 +3,8 @@ package config
 import (
 	"net"
 	"time"
+
+	"github.com/AmirMirzayi/relay/utils"
 )
 
 const (
@@ -24,3 +26,15 @@ type File struct {
 }
 
 type Files []File
+
+func (fs Files) TotalSize() (totalSize int64) {
+	for _, f := range fs {
+		totalSize += f.Size
+	}
+	return
+}
+
+func (fs Files) HumanReadableTotalSize() string {
+	totalSize := fs.TotalSize()
+	return utils.ConvertByteSizeToHumanReadable(float64(totalSize))
+}
