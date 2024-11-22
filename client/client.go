@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/AmirMirzayi/relay/config"
@@ -34,7 +35,16 @@ func Receive(ip net.IP, port int, timeout time.Duration) error {
 }
 
 func receiveFile(conn net.Conn, file config.File) error {
-	f, err := os.Create(file.Name)
+	fileDir := ""
+	if len(file.Parents) > 0 {
+		fileDir := filepath.Join(file.Parents...)
+		dir := filepath.Dir(filepath.Join(fileDir, file.Name))
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			return err
+		}
+	}
+
+	f, err := os.Create(filepath.Join(fileDir, file.Name))
 	if err != nil {
 		return fmt.Errorf("failed to create file %s, %v", file.Name, err)
 	}
@@ -45,7 +55,6 @@ func receiveFile(conn net.Conn, file config.File) error {
 	byteToRead := config.DefaultChunkSize
 
 	for written < file.Size {
-
 		if config.DefaultChunkSize > file.Size-written {
 			byteToRead = int(file.Size - written)
 		}
