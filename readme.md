@@ -2,7 +2,7 @@ relay is a simple command line file transfer over local or global network using 
 It don't require any dependencies and is not platform specific. It should work on linux, windows and macOS.
 
 # INSTALLATION
-You can install this tool using go command `go install https://github.com/AmirMirzayi/relay` or download binary from [Releases][https://github.com/AmirMirzayi/relay/releases]
+You can install this tool using go command `go install https://github.com/AmirMirzayi/relay` or download binary from [Releases](https://github.com/AmirMirzayi/relay/releases).
 
 # USAGE
 > [!IMPORTANT]
@@ -21,7 +21,7 @@ You can install this tool using go command `go install https://github.com/AmirMi
 ## Host serves to send files
 send command must have at least 1 argument which has file or directory path
 ```
-relay send [-p 12345 | -i 127.0.0.1 | -t 120 | -w 25] some_file.ext other_file2.ext some_directory_within_subdirectories
+relay send [-p 12345 | -i 127.0.0.1 | -t 120 | -w 25 | -l false] some_file.ext other_file2.ext some_directory_within_subdirectories
 ```
 
 ### Flags
@@ -29,7 +29,7 @@ relay send [-p 12345 | -i 127.0.0.1 | -t 120 | -w 25] some_file.ext other_file2.
 -s, --save string   files save path (default "/home/$(USER)/relay")
 ```
 
-## Connect to host to receive files
+## Connect to the host to receive files
 ```
-relay receive -i 127.0.0.1 [-p 12345 | -t 120 | -w 25 | -s /home]
+relay receive -i 127.0.0.1 [-p 12345 | -t 120 | -w 25 | -s /home | -l false]
 ```
