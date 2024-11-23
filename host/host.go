@@ -20,7 +20,7 @@ import (
 
 // Serve starts a file transfer server that listens on the specified IP and port.
 // It serves files located at the provided paths to connected clients.
-func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, pathes ...string) error {
+func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, silentTransfer bool, pathes ...string) error {
 	files, err := getFilesByPathes(pathes...)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, pathes 
 	}
 
 	for i, file := range files {
-		if err = sendFile(conn, file, i+1, progressbarWidth); err != nil {
+		if err = sendFile(conn, file, i+1, progressbarWidth, silentTransfer); err != nil {
 			return err
 		}
 	}
@@ -101,7 +101,7 @@ func sendFilesInfo(conn net.Conn, files config.Files) error {
 	return nil
 }
 
-func sendFile(conn net.Conn, file config.File, fileID, progressbarWidth int) error {
+func sendFile(conn net.Conn, file config.File, fileID, progressbarWidth int, silentTransfer bool) error {
 	f, err := os.Open(file.Path)
 	if err != nil {
 		return fmt.Errorf("failed to load file %s, %v", file.Path, err)
@@ -126,13 +126,15 @@ func sendFile(conn net.Conn, file config.File, fileID, progressbarWidth int) err
 			return fmt.Errorf("failed to write over network, %v", err)
 		}
 
-		totalByteSent += int64(byteSent)
-		sentPercent := int(totalByteSent * 100 / file.Size)
-
-		utils.DrawProgressBar(sentPercent, progressbarWidth, shortedFileName)
+		if !silentTransfer {
+			totalByteSent += int64(byteSent)
+			sentPercent := int(totalByteSent * 100 / file.Size)
+			utils.DrawProgressBar(sentPercent, progressbarWidth, shortedFileName)
+		}
 	}
-	fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))
-
+	if !silentTransfer {
+		fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))
+	}
 	return nil
 }
 

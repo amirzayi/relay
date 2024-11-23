@@ -2,7 +2,7 @@ relay is a simple command line file transfer over local or global network using 
 It don't require any dependencies and is not platform specific. It should work on linux, windows and macOS.
 
 # INSTALLATION
-You can install this tool using go command `go install https://github.com/AmirMirzayi/relay"` or download binary from [Releases][https://github.com/AmirMirzayi/relay/releases].
+You can install this tool using go command `go install https://github.com/AmirMirzayi/relay` or download binary from [Releases][https://github.com/AmirMirzayi/relay/releases]
 
 # USAGE
 > [!IMPORTANT]
@@ -15,6 +15,7 @@ You can install this tool using go command `go install https://github.com/AmirMi
 -p, --port      int     application running port(default 55555)
 -t, --timeout   int     connection timeout in second (default 30)
 -w, --width     int     progress bar width (default 25)
+-l, --silent    bool    silent transfer (default false)
 ```
 
 ## Host serves to send files

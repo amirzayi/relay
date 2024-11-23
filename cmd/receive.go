@@ -22,6 +22,7 @@ var receiveCmd = &cobra.Command{
 			progressbarWidth,
 			time.Duration(timeoutInSecond)*time.Second,
 			savePath,
+			silentTransfer,
 		)
 	},
 }

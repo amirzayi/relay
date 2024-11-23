@@ -22,6 +22,7 @@ var sendCmd = &cobra.Command{
 			port,
 			progressbarWidth,
 			time.Duration(timeoutInSecond)*time.Second,
+			silentTransfer,
 			args...)
 	},
 }

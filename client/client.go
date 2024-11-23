@@ -19,7 +19,7 @@ import (
 
 // Receive connects to a file transfer server at the specified IP and port to receive files.
 // It handles file reception and displays a progress bar.
-func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration, savePath string) error {
+func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration, savePath string, silentTransfer bool) error {
 	serverAddress := fmt.Sprintf("%s:%d", ip, port)
 	fmt.Printf("Connecting to %s...", serverAddress)
 	conn, err := net.DialTimeout("tcp", serverAddress, timeout)
@@ -37,7 +37,7 @@ func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration, saveP
 	fmt.Printf("Preparing to receive %d files with %s\n", len(files), files.HumanReadableTotalSize())
 
 	for i, file := range files {
-		if err = receiveFile(conn, file, savePath, i+1, progressbarWidth); err != nil {
+		if err = receiveFile(conn, file, savePath, i+1, progressbarWidth, silentTransfer); err != nil {
 			return err
 		}
 	}
@@ -45,7 +45,7 @@ func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration, saveP
 	return nil
 }
 
-func receiveFile(conn net.Conn, file config.File, savePath string, fileID, progressbarWidth int) error {
+func receiveFile(conn net.Conn, file config.File, savePath string, fileID, progressbarWidth int, silentTransfer bool) error {
 	filePath := filepath.Join(file.Parents...)
 	filePath = filepath.Join(savePath, filePath, file.Name)
 	dir := filepath.Dir(filePath)
@@ -80,13 +80,15 @@ func receiveFile(conn net.Conn, file config.File, savePath string, fileID, progr
 		}
 
 		totalBytesRead += int64(n)
-		totalBytesWritten += int64(m)
-
-		receivedPercent := int(totalBytesWritten * 100 / file.Size)
-		utils.DrawProgressBar(receivedPercent, progressbarWidth, shortedFileName)
+		if !silentTransfer {
+			totalBytesWritten += int64(m)
+			receivedPercent := int(totalBytesWritten * 100 / file.Size)
+			utils.DrawProgressBar(receivedPercent, progressbarWidth, shortedFileName)
+		}
 	}
-	fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))
-
+	if !silentTransfer {
+		fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))
+	}
 	return nil
 }
 
