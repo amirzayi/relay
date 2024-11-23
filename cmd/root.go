@@ -1,7 +1,7 @@
+// Package cmd implements command line arguments to use application
 package cmd
 
 import (
-	"fmt"
 	"net"
 	"os"
 	"time"
@@ -10,34 +10,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "relay",
-	Short: "relay is an cli tool wich provide transfer files over local network.",
-	// 	Long: `A longer description that spans multiple lines and likely contains
-	// examples and usage of using your application. For example:
-
-	// Cobra is a CLI library for Go that empowers applications.
-	// This application is a tool to generate the needed files
-	// to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	Short: "relay is an CLI application wich provide transfer files over network.",
+	Long: `relay is a CLI application for transferring files over network(local or global).
+This application will transfer folders within files as exists in source machine.
+	`,
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
-	defer func() {
-		r := recover()
-		if r != nil {
-			fmt.Printf("error occured: %v", r)
-		}
-	}()
 }
 
 var (
@@ -45,18 +30,19 @@ var (
 	port,
 	timeoutInSecond,
 	progressbarWidth int
+	savePath string
 )
 
 func init() {
-
 	rootCmd.PersistentFlags().IntVarP(&port, "port", "p", config.DefaultPort, "application running port")
 	rootCmd.PersistentFlags().IntVarP(&timeoutInSecond, "timeout", "t", int(config.DefaultTimeout/time.Second), "connection timeout in second")
 	rootCmd.PersistentFlags().IntVarP(&progressbarWidth, "width", "w", config.ProgressbarWidth, "progress bar width[must divisible to 100]")
+
 	sendCmd.PersistentFlags().IPVarP(&ip, "ip", "i", config.DefaultIP(), "sender machine binding ip address")
 	receiveCmd.PersistentFlags().IPVarP(&ip, "ip", "i", nil, "sender machine ip address")
 	receiveCmd.MarkPersistentFlagRequired("ip")
+	receiveCmd.PersistentFlags().StringVarP(&savePath, "save", "s", config.DefaultDirectory(), "files save path")
 
 	rootCmd.AddCommand(receiveCmd)
 	rootCmd.AddCommand(sendCmd)
-
 }

@@ -1,3 +1,5 @@
+// Package client enables file reception from a server over a network.
+// It handles connecting to the host, receiving files and displaying progress.
 package client
 
 import (
@@ -8,13 +10,16 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/AmirMirzayi/relay/config"
 	"github.com/AmirMirzayi/relay/utils"
 )
 
-func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration) error {
+// Receive connects to a file transfer server at the specified IP and port to receive files.
+// It handles file reception and displays a progress bar.
+func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration, savePath string) error {
 	serverAddress := fmt.Sprintf("%s:%d", ip, port)
 	fmt.Printf("Connecting to %s...", serverAddress)
 	conn, err := net.DialTimeout("tcp", serverAddress, timeout)
@@ -31,8 +36,8 @@ func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration) error
 
 	fmt.Printf("Preparing to receive %d files with %s\n", len(files), files.HumanReadableTotalSize())
 
-	for _, file := range files {
-		if err = receiveFile(conn, file, progressbarWidth); err != nil {
+	for i, file := range files {
+		if err = receiveFile(conn, file, savePath, i+1, progressbarWidth); err != nil {
 			return err
 		}
 	}
@@ -40,17 +45,15 @@ func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration) error
 	return nil
 }
 
-func receiveFile(conn net.Conn, file config.File, progressbarWidth int) error {
-	fileDir := ""
-	if len(file.Parents) > 0 {
-		fileDir := filepath.Join(file.Parents...)
-		dir := filepath.Dir(filepath.Join(fileDir, file.Name))
-		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-			return err
-		}
+func receiveFile(conn net.Conn, file config.File, savePath string, fileID, progressbarWidth int) error {
+	filePath := filepath.Join(file.Parents...)
+	filePath = filepath.Join(savePath, filePath, file.Name)
+	dir := filepath.Dir(filePath)
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return err
 	}
 
-	f, err := os.Create(filepath.Join(fileDir, file.Name))
+	f, err := os.Create(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to create file %s, %v", file.Name, err)
 	}
@@ -82,7 +85,7 @@ func receiveFile(conn net.Conn, file config.File, progressbarWidth int) error {
 		receivedPercent := int(totalBytesWritten * 100 / file.Size)
 		utils.DrawProgressBar(receivedPercent, progressbarWidth, shortedFileName)
 	}
-	fmt.Printf("\r%s ✓\n", file.Name)
+	fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))
 
 	return nil
 }

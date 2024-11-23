@@ -2,6 +2,8 @@ package config
 
 import (
 	"net"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/AmirMirzayi/relay/utils"
@@ -16,6 +18,16 @@ const (
 
 func DefaultIP() net.IP {
 	return net.IPv4zero
+}
+
+func DefaultDirectory() string {
+	outputDir := "relay"
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return outputDir
+	}
+	outputDir = filepath.Join(homeDir, outputDir)
+	return outputDir
 }
 
 type File struct {

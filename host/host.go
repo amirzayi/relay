@@ -1,3 +1,5 @@
+// Package host provides functionality for serving files to clients over a network.
+// It manage file transfer sessions, network configurations and client interactions.
 package host
 
 import (
@@ -9,12 +11,15 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/AmirMirzayi/relay/config"
 	"github.com/AmirMirzayi/relay/utils"
 )
 
+// Serve starts a file transfer server that listens on the specified IP and port.
+// It serves files located at the provided paths to connected clients.
 func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, pathes ...string) error {
 	files, err := getFilesByPathes(pathes...)
 	if err != nil {
@@ -39,8 +44,8 @@ func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, pathes 
 		return err
 	}
 
-	for _, file := range files {
-		if err = sendFile(conn, file, progressbarWidth); err != nil {
+	for i, file := range files {
+		if err = sendFile(conn, file, i+1, progressbarWidth); err != nil {
 			return err
 		}
 	}
@@ -96,14 +101,14 @@ func sendFilesInfo(conn net.Conn, files config.Files) error {
 	return nil
 }
 
-func sendFile(conn net.Conn, file config.File, progressbarWidth int) error {
+func sendFile(conn net.Conn, file config.File, fileID, progressbarWidth int) error {
 	f, err := os.Open(file.Path)
 	if err != nil {
 		return fmt.Errorf("failed to load file %s, %v", file.Path, err)
 	}
 	defer f.Close()
 
-	shortedFileName := utils.ShortedString(file.Name, 10, 6, 4)
+	shortedFileName := utils.ShortedString(file.Name, 10, 7, 4)
 
 	var totalByteSent int64
 	buffer := make([]byte, config.DefaultChunkSize)
@@ -126,7 +131,7 @@ func sendFile(conn net.Conn, file config.File, progressbarWidth int) error {
 
 		utils.DrawProgressBar(sentPercent, progressbarWidth, shortedFileName)
 	}
-	fmt.Printf("\r%s ✓\n", file.Name)
+	fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))
 
 	return nil
 }
@@ -140,23 +145,30 @@ func readDirectoryFilesRecursively(path string, parents ...string) (config.Files
 
 	var files []config.File
 
+	// we need to sepereate files and directories iteration over entries because of confusation
 	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+
 		entryInfo, err := entry.Info()
 		if err != nil {
 			return nil, fmt.Errorf("failed to load info of %s, %v", entry.Name(), err)
 		}
 
-		if !entryInfo.IsDir() {
-			files = append(files, config.File{
-				Name:    entry.Name(),
-				Size:    entryInfo.Size(),
-				Path:    filepath.Join(path, entry.Name()),
-				Parents: append(parents, filepath.Base(path)),
-			})
+		files = append(files, config.File{
+			Name:    entry.Name(),
+			Size:    entryInfo.Size(),
+			Path:    filepath.Join(path, entry.Name()),
+			Parents: parents,
+		})
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
 			continue
 		}
-
-		parents = append(parents, filepath.Base(path))
+		parents = append(parents, entry.Name())
 		innerFiles, err := readDirectoryFilesRecursively(filepath.Join(path, entry.Name()), parents...)
 		if err != nil {
 			return nil, err
