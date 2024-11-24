@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"path/filepath"
@@ -59,36 +58,18 @@ func receiveFile(conn net.Conn, file config.File, savePath string, fileID, progr
 	}
 	defer f.Close()
 
-	shortedFileName := utils.ShortedString(file.Name, 10, 6, 4)
-
-	buffer := make([]byte, config.DefaultChunkSize)
-	var totalBytesRead, totalBytesWritten int64
-	byteToRead := config.DefaultChunkSize
-
-	for totalBytesRead < file.Size {
-		if config.DefaultChunkSize > file.Size-totalBytesRead {
-			byteToRead = int(file.Size - totalBytesRead)
-		}
-		n, err := io.ReadFull(conn, buffer[:byteToRead])
-		if err != nil {
-			return fmt.Errorf("failed to read buffer from network, %v", err)
-		}
-
-		m, err := f.Write(buffer[:n])
-		if err != nil {
-			return fmt.Errorf("failed to write buffer into file, %v", err)
-		}
-
-		totalBytesRead += int64(n)
-		if !silentTransfer {
-			totalBytesWritten += int64(m)
-			receivedPercent := int(totalBytesWritten * 100 / file.Size)
-			utils.DrawProgressBar(receivedPercent, progressbarWidth, shortedFileName)
-		}
+	if silentTransfer {
+		return utils.WriteFromReader(conn, f, file.Size, config.DefaultBufferSize)
 	}
-	if !silentTransfer {
-		fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))
+
+	shortedFileName := utils.ShortedString(file.Name, 10, 8, 3)
+	fileSize := utils.ConvertByteSizeToHumanReadable(float64(file.Size))
+	barTitle := fmt.Sprintf("<%s ^ %s>", fileSize, shortedFileName)
+	if err = utils.DrawRWProgressbar(conn, f, file.Size, config.DefaultBufferSize, progressbarWidth, barTitle); err != nil {
+		return err
 	}
+	fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))
+
 	return nil
 }
 

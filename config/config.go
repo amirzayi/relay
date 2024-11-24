@@ -12,7 +12,7 @@ import (
 const (
 	DefaultPort             = 55555
 	DefaultTimeout          = 30 * time.Second
-	DefaultChunkSize        = 1024 * 1024
+	DefaultBufferSize       = 1024 * 1024
 	DefaultProgressbarWidth = 25
 	DefaultSilent           = false
 )

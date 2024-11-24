@@ -5,13 +5,10 @@ package host
 import (
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/AmirMirzayi/relay/config"
@@ -20,8 +17,8 @@ import (
 
 // Serve starts a file transfer server that listens on the specified IP and port.
 // It serves files located at the provided paths to connected clients.
-func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, silentTransfer bool, pathes ...string) error {
-	files, err := getFilesByPathes(pathes...)
+func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, silentTransfer bool, paths ...string) error {
+	files, err := getFilesByPaths(paths...)
 	if err != nil {
 		return err
 	}
@@ -53,12 +50,12 @@ func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, silentT
 	return nil
 }
 
-func getFilesByPathes(pathes ...string) (config.Files, error) {
+func getFilesByPaths(paths ...string) (config.Files, error) {
 	// preallocate files to args lengths
 	// but, what if an arg was directory
-	files := make(config.Files, 0, len(pathes))
+	files := make(config.Files, 0, len(paths))
 
-	for _, path := range pathes {
+	for _, path := range paths {
 		fileInfo, err := os.Stat(path)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read information of %s, %v", path, err)
@@ -108,33 +105,17 @@ func sendFile(conn net.Conn, file config.File, fileID, progressbarWidth int, sil
 	}
 	defer f.Close()
 
-	shortedFileName := utils.ShortedString(file.Name, 10, 7, 4)
-
-	var totalByteSent int64
-	buffer := make([]byte, config.DefaultChunkSize)
-	for {
-		n, err := f.Read(buffer)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			return fmt.Errorf("failed to buffering file %s, %v", file.Path, err)
-		}
-
-		byteSent, err := conn.Write(buffer[:n])
-		if err != nil {
-			return fmt.Errorf("failed to write over network, %v", err)
-		}
-
-		if !silentTransfer {
-			totalByteSent += int64(byteSent)
-			sentPercent := int(totalByteSent * 100 / file.Size)
-			utils.DrawProgressBar(sentPercent, progressbarWidth, shortedFileName)
-		}
+	if silentTransfer {
+		return utils.WriteFromReader(f, conn, file.Size, config.DefaultBufferSize)
 	}
-	if !silentTransfer {
-		fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))
+
+	shortedFileName := utils.ShortedString(file.Name, 10, 8, 3)
+	fileSize := utils.ConvertByteSizeToHumanReadable(float64(file.Size))
+	barTitle := fmt.Sprintf("<%s ^ %s>", fileSize, shortedFileName)
+	if err = utils.DrawRWProgressbar(f, conn, file.Size, config.DefaultBufferSize, progressbarWidth, barTitle); err != nil {
+		return err
 	}
+	fmt.Printf("\r[%d] %s ✓\033[K\n", fileID, file.Name)
 	return nil
 }
 
@@ -147,7 +128,7 @@ func readDirectoryFilesRecursively(path string, parents ...string) (config.Files
 
 	var files []config.File
 
-	// we need to sepereate files and directories iteration over entries because of confusation
+	// we need to separate files and directories iteration over entries because of confusing
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
