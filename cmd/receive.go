@@ -19,6 +19,7 @@ var receiveCmd = &cobra.Command{
 
 		return client.Receive(ip,
 			port,
+			bufferSize,
 			progressbarWidth,
 			time.Duration(timeoutInSecond)*time.Second,
 			savePath,

@@ -18,7 +18,7 @@ import (
 
 // Receive connects to a file transfer server at the specified IP and port to receive files.
 // It handles file reception and displays a progress bar.
-func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration, savePath string, silentTransfer bool) error {
+func Receive(ip net.IP, port, bufferSize, progressbarWidth int, timeout time.Duration, savePath string, silentTransfer bool) error {
 	serverAddress := fmt.Sprintf("%s:%d", ip, port)
 	fmt.Printf("Connecting to %s...", serverAddress)
 	conn, err := net.DialTimeout("tcp", serverAddress, timeout)
@@ -36,7 +36,7 @@ func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration, saveP
 	fmt.Printf("Preparing to receive %d files with %s\n", len(files), files.HumanReadableTotalSize())
 
 	for i, file := range files {
-		if err = receiveFile(conn, file, savePath, i+1, progressbarWidth, silentTransfer); err != nil {
+		if err = receiveFile(conn, file, savePath, bufferSize, i+1, progressbarWidth, silentTransfer); err != nil {
 			return err
 		}
 	}
@@ -44,7 +44,7 @@ func Receive(ip net.IP, port, progressbarWidth int, timeout time.Duration, saveP
 	return nil
 }
 
-func receiveFile(conn net.Conn, file config.File, savePath string, fileID, progressbarWidth int, silentTransfer bool) error {
+func receiveFile(conn net.Conn, file config.File, savePath string, bufferSize, fileID, progressbarWidth int, silentTransfer bool) error {
 	filePath := filepath.Join(file.Parents...)
 	filePath = filepath.Join(savePath, filePath, file.Name)
 	dir := filepath.Dir(filePath)
@@ -59,13 +59,13 @@ func receiveFile(conn net.Conn, file config.File, savePath string, fileID, progr
 	defer f.Close()
 
 	if silentTransfer {
-		return utils.WriteFromReader(conn, f, file.Size, config.DefaultBufferSize)
+		return utils.WriteFromReader(conn, f, file.Size, bufferSize)
 	}
 
 	shortedFileName := utils.ShortedString(file.Name, 10, 8, 3)
 	fileSize := utils.ConvertByteSizeToHumanReadable(float64(file.Size))
 	barTitle := fmt.Sprintf("<%s ^ %s>", fileSize, shortedFileName)
-	if err = utils.DrawRWProgressbar(conn, f, file.Size, config.DefaultBufferSize, progressbarWidth, barTitle); err != nil {
+	if err = utils.DrawRWProgressbar(conn, f, file.Size, bufferSize, progressbarWidth, barTitle); err != nil {
 		return err
 	}
 	fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))

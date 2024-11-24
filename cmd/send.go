@@ -20,6 +20,7 @@ var sendCmd = &cobra.Command{
 
 		return host.Serve(ip,
 			port,
+			bufferSize,
 			progressbarWidth,
 			time.Duration(timeoutInSecond)*time.Second,
 			silentTransfer,

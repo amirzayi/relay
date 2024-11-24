@@ -33,7 +33,8 @@ var (
 	ip net.IP
 	port,
 	timeoutInSecond,
-	progressbarWidth int
+	progressbarWidth,
+	bufferSize int
 	savePath       string
 	silentTransfer bool
 )
@@ -43,6 +44,7 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(&timeoutInSecond, "timeout", "t", int(config.DefaultTimeout/time.Second), "connection timeout in second")
 	rootCmd.PersistentFlags().IntVarP(&progressbarWidth, "width", "w", config.DefaultProgressbarWidth, "progress bar width[must divisible to 100]")
 	rootCmd.PersistentFlags().BoolVarP(&silentTransfer, "silent", "l", config.DefaultSilent, "silent transfer")
+	rootCmd.PersistentFlags().IntVarP(&bufferSize, "buffer", "b", config.DefaultBufferSize, "buffer size in byte")
 
 	sendCmd.PersistentFlags().IPVarP(&ip, "ip", "i", config.DefaultIP(), "sender machine binding ip address")
 	receiveCmd.PersistentFlags().IPVarP(&ip, "ip", "i", nil, "sender machine ip address")

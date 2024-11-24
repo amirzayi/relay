@@ -17,7 +17,7 @@ import (
 
 // Serve starts a file transfer server that listens on the specified IP and port.
 // It serves files located at the provided paths to connected clients.
-func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, silentTransfer bool, paths ...string) error {
+func Serve(ip net.IP, port, bufferSize, progressbarWidth int, timeout time.Duration, silentTransfer bool, paths ...string) error {
 	files, err := getFilesByPaths(paths...)
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func Serve(ip net.IP, port, progressbarWidth int, timeout time.Duration, silentT
 	}
 
 	for i, file := range files {
-		if err = sendFile(conn, file, i+1, progressbarWidth, silentTransfer); err != nil {
+		if err = sendFile(conn, file, bufferSize, i+1, progressbarWidth, silentTransfer); err != nil {
 			return err
 		}
 	}
@@ -98,7 +98,7 @@ func sendFilesInfo(conn net.Conn, files config.Files) error {
 	return nil
 }
 
-func sendFile(conn net.Conn, file config.File, fileID, progressbarWidth int, silentTransfer bool) error {
+func sendFile(conn net.Conn, file config.File, bufferSize, fileID, progressbarWidth int, silentTransfer bool) error {
 	f, err := os.Open(file.Path)
 	if err != nil {
 		return fmt.Errorf("failed to load file %s, %v", file.Path, err)
@@ -106,13 +106,13 @@ func sendFile(conn net.Conn, file config.File, fileID, progressbarWidth int, sil
 	defer f.Close()
 
 	if silentTransfer {
-		return utils.WriteFromReader(f, conn, file.Size, config.DefaultBufferSize)
+		return utils.WriteFromReader(f, conn, file.Size, bufferSize)
 	}
 
 	shortedFileName := utils.ShortedString(file.Name, 10, 8, 3)
 	fileSize := utils.ConvertByteSizeToHumanReadable(float64(file.Size))
 	barTitle := fmt.Sprintf("<%s ^ %s>", fileSize, shortedFileName)
-	if err = utils.DrawRWProgressbar(f, conn, file.Size, config.DefaultBufferSize, progressbarWidth, barTitle); err != nil {
+	if err = utils.DrawRWProgressbar(f, conn, file.Size, bufferSize, progressbarWidth, barTitle); err != nil {
 		return err
 	}
 	fmt.Printf("\r[%d] %s ✓\033[K\n", fileID, file.Name)

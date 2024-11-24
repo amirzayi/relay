@@ -6,7 +6,7 @@ import (
 )
 
 // DrawRWProgressbar reads data from an io.Reader and writes it to an io.Writer with buffering while displaying a progress bar.
-func DrawRWProgressbar(r io.Reader, w io.Writer, size, bufferSize int64, barSize int, barTitle string) error {
+func DrawRWProgressbar(r io.Reader, w io.Writer, size int64, bufferSize, barSize int, barTitle string) error {
 	lr := io.LimitReader(r, size)
 	rw := io.TeeReader(lr, w)
 
@@ -26,7 +26,7 @@ func DrawRWProgressbar(r io.Reader, w io.Writer, size, bufferSize int64, barSize
 }
 
 // WriteFromReader reads data from an io.Reader and writes it to an io.Writer with buffering.
-func WriteFromReader(r io.Reader, w io.Writer, size, bufferSize int64) error {
+func WriteFromReader(r io.Reader, w io.Writer, size int64, bufferSize int) error {
 	lr := io.LimitReader(r, size)
 	rw := io.TeeReader(lr, w)
 

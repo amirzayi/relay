@@ -8,12 +8,16 @@ You can install this tool using go command `go install https://github.com/AmirMi
 > [!IMPORTANT]
 > Make sure application has privilege to connect to network and change filesystem.
 
+> [!TIP]
+> If you increase the size of read/write buffer. Operating system can touch the I/O device less. And it can read/write larger blocks in each operation. Then, the performance gets better. Choose buffer size on powers of two with non-negative exponents to achieve more performance and speed.
+
 ## Flags
 ```
 -h, --help              help for relay
 -i, --ip        ip      sender machine binding ip address (default 0.0.0.0)
 -p, --port      int     application running port(default 55555)
 -t, --timeout   int     connection timeout in second (default 30)
+-b, --buffer    int     buffer size in byte (default 1048576)
 -w, --width     int     progress bar width (default 25)
 -l, --silent    bool    silent transfer (default false)
 ```
@@ -21,7 +25,7 @@ You can install this tool using go command `go install https://github.com/AmirMi
 ## Host serves to send files
 send command must have at least 1 argument which has file or directory path
 ```
-relay send [-p 12345 | -i 127.0.0.1 | -t 120 | -w 25 | -l false] some_file.ext other_file2.ext some_directory_within_subdirectories
+relay send [-p 12345 | -i 127.0.0.1 | -b 1024 | -t 120 | -w 25 | -l false] some_file.ext other_file2.ext some_directory_within_subdirectories
 ```
 
 ### Flags
@@ -31,5 +35,5 @@ relay send [-p 12345 | -i 127.0.0.1 | -t 120 | -w 25 | -l false] some_file.ext o
 
 ## Connect to the host to receive files
 ```
-relay receive -i 127.0.0.1 [-p 12345 | -t 120 | -w 25 | -s /home | -l false]
+relay receive -i 127.0.0.1 [-p 12345 | -b 1024 | -t 120 | -w 25 | -s /home | -l false]
 ```
