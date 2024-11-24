@@ -71,7 +71,7 @@ func getFilesByPaths(paths ...string) (config.Files, error) {
 			continue
 		}
 
-		dirFiles, err := readDirectoryFilesRecursively(path)
+		dirFiles, err := readDirectoryFilesRecursively(path, filepath.Base(path))
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve files on directory %s, %v", path, err)
 		}
