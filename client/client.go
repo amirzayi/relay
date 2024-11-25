@@ -9,8 +9,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/AmirMirzayi/relay/config"
 	"github.com/AmirMirzayi/relay/utils"
@@ -18,10 +16,10 @@ import (
 
 // Receive connects to a file transfer server at the specified IP and port to receive files.
 // It handles file reception and displays a progress bar.
-func Receive(ip net.IP, port, bufferSize, progressbarWidth int, timeout time.Duration, savePath string, silentTransfer bool) error {
-	serverAddress := fmt.Sprintf("%s:%d", ip, port)
+func Receive(setting config.Setting) error {
+	serverAddress := fmt.Sprintf("%s:%d", setting.IP, setting.Port)
 	fmt.Printf("Connecting to %s...", serverAddress)
-	conn, err := net.DialTimeout("tcp", serverAddress, timeout)
+	conn, err := net.DialTimeout("tcp", serverAddress, setting.Timeout)
 	if err != nil {
 		return err
 	}
@@ -36,7 +34,7 @@ func Receive(ip net.IP, port, bufferSize, progressbarWidth int, timeout time.Dur
 	fmt.Printf("Preparing to receive %d files with %s\n", len(files), files.HumanReadableTotalSize())
 
 	for i, file := range files {
-		if err = receiveFile(conn, file, savePath, bufferSize, i+1, progressbarWidth, silentTransfer); err != nil {
+		if err = receiveFile(conn, file, i+1, setting); err != nil {
 			return err
 		}
 	}
@@ -44,9 +42,9 @@ func Receive(ip net.IP, port, bufferSize, progressbarWidth int, timeout time.Dur
 	return nil
 }
 
-func receiveFile(conn net.Conn, file config.File, savePath string, bufferSize, fileID, progressbarWidth int, silentTransfer bool) error {
+func receiveFile(conn net.Conn, file config.File, fileID int, setting config.Setting) error {
 	filePath := filepath.Join(file.Parents...)
-	filePath = filepath.Join(savePath, filePath, file.Name)
+	filePath = filepath.Join(setting.SavePath, filePath, file.Name)
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return err
@@ -58,17 +56,17 @@ func receiveFile(conn net.Conn, file config.File, savePath string, bufferSize, f
 	}
 	defer f.Close()
 
-	if silentTransfer {
-		return utils.WriteFromReader(conn, f, file.Size, bufferSize)
+	if setting.SilentTransfer {
+		return utils.WriteFromReader(conn, f, file.Size, setting.BufferSize)
 	}
 
 	shortedFileName := utils.ShortedString(file.Name, 10, 8, 3)
 	fileSize := utils.ConvertByteSizeToHumanReadable(float64(file.Size))
 	barTitle := fmt.Sprintf("<%s ^ %s>", fileSize, shortedFileName)
-	if err = utils.DrawRWProgressbar(conn, f, file.Size, bufferSize, progressbarWidth, barTitle); err != nil {
+	if err = utils.DrawRWProgressbar(conn, f, file.Size, setting.BufferSize, setting.ProgressbarWidth, barTitle); err != nil {
 		return err
 	}
-	fmt.Printf("\r[%d] %s ✓%s\n", fileID, file.Name, strings.Repeat(" ", progressbarWidth))
+	fmt.Printf("\r[%d] %s ✓\033[K\n", fileID, file.Name)
 
 	return nil
 }

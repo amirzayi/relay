@@ -2,9 +2,7 @@
 package cmd
 
 import (
-	"net"
 	"os"
-	"time"
 
 	"github.com/AmirMirzayi/relay/config"
 	"github.com/spf13/cobra"
@@ -15,7 +13,7 @@ var rootCmd = &cobra.Command{
 	Short: "relay is an CLI application wich provide transfer files over network.",
 	Long: `relay is a CLI application for transferring files over network(local or global).
 This application will transfer folders within files as exists in source machine.
-credit: Amir Mirzaei 
+credit: Amir Mirzaei
 mirzayi994@gmail.com
 https://github.com/AmirMirzayi
 https://www.linkedin.com/in/amir-mirzaei
@@ -29,27 +27,19 @@ func Execute() {
 	}
 }
 
-var (
-	ip net.IP
-	port,
-	timeoutInSecond,
-	progressbarWidth,
-	bufferSize int
-	savePath       string
-	silentTransfer bool
-)
+var setting config.Setting
 
 func init() {
-	rootCmd.PersistentFlags().IntVarP(&port, "port", "p", config.DefaultPort, "application running port")
-	rootCmd.PersistentFlags().IntVarP(&timeoutInSecond, "timeout", "t", int(config.DefaultTimeout/time.Second), "connection timeout in second")
-	rootCmd.PersistentFlags().IntVarP(&progressbarWidth, "width", "w", config.DefaultProgressbarWidth, "progress bar width[must divisible to 100]")
-	rootCmd.PersistentFlags().BoolVarP(&silentTransfer, "silent", "l", config.DefaultSilent, "silent transfer")
-	rootCmd.PersistentFlags().IntVarP(&bufferSize, "buffer", "b", config.DefaultBufferSize, "buffer size in byte")
+	rootCmd.PersistentFlags().IntVarP(&setting.Port, "port", "p", config.DefaultPort, "application running port")
+	rootCmd.PersistentFlags().DurationVarP(&setting.Timeout, "timeout", "t", config.DefaultTimeout, "connection timeout")
+	rootCmd.PersistentFlags().IntVarP(&setting.ProgressbarWidth, "width", "w", config.DefaultProgressbarWidth, "progress bar width[must divisible to 100]")
+	rootCmd.PersistentFlags().BoolVarP(&setting.SilentTransfer, "silent", "l", config.DefaultSilent, "silent transfer")
+	rootCmd.PersistentFlags().IntVarP(&setting.BufferSize, "buffer", "b", config.DefaultBufferSize, "buffer size in byte")
 
-	sendCmd.PersistentFlags().IPVarP(&ip, "ip", "i", config.DefaultIP(), "sender machine binding ip address")
-	receiveCmd.PersistentFlags().IPVarP(&ip, "ip", "i", nil, "sender machine ip address")
+	sendCmd.PersistentFlags().IPVarP(&setting.IP, "ip", "i", config.DefaultIP(), "sender machine binding ip address")
+	receiveCmd.PersistentFlags().IPVarP(&setting.IP, "ip", "i", nil, "sender machine ip address")
 	receiveCmd.MarkPersistentFlagRequired("ip")
-	receiveCmd.PersistentFlags().StringVarP(&savePath, "save", "s", config.DefaultDirectory(), "files save path")
+	receiveCmd.PersistentFlags().StringVarP(&setting.SavePath, "save", "s", config.DefaultDirectory(), "files save path")
 
 	rootCmd.AddCommand(receiveCmd)
 	rootCmd.AddCommand(sendCmd)

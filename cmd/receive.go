@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/AmirMirzayi/relay/client"
 	"github.com/spf13/cobra"
@@ -11,19 +10,11 @@ import (
 var receiveCmd = &cobra.Command{
 	Use:     "receive",
 	Short:   "receive file(s)",
-	Example: "relay receive -i 127.0.0.1 [-p 12345 | -t 120 | -w 25]",
+	Example: "relay receive -i 127.0.0.1 [-p 12345 | -b 1024 | -t 120s | -w 25]",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if 100%progressbarWidth != 0 {
-			return fmt.Errorf("%d is not divisible to 100", progressbarWidth)
+		if 100%setting.ProgressbarWidth != 0 {
+			return fmt.Errorf("100 is not divisible by %d", setting.ProgressbarWidth)
 		}
-
-		return client.Receive(ip,
-			port,
-			bufferSize,
-			progressbarWidth,
-			time.Duration(timeoutInSecond)*time.Second,
-			savePath,
-			silentTransfer,
-		)
+		return client.Receive(setting)
 	},
 }
