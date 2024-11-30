@@ -9,6 +9,7 @@ import (
 
 var sendCmd = &cobra.Command{
 	Use:     "send",
+	Aliases: []string{"s"},
 	Short:   "send file(s)",
 	Example: "relay send [-p 12345 | -i 127.0.0.1 | -b 1024 | -t 120s | -w 25] some_file.ext other_file2.ext some_directory_within_subdirectories",
 	Args:    cobra.MinimumNArgs(1),

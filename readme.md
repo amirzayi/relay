@@ -28,7 +28,7 @@ You can install this tool using go command `go install https://github.com/AmirMi
 ## Host serves to send files
 send command must have at least 1 argument which has file or directory path
 ```
-relay send [-p 12345 | -i 127.0.0.1 | -b 1024 | -t 120 | -w 25 | -l false] some_file.ext other_file2.ext some_directory_within_subdirectories
+relay send [-p 12345 | -i 127.0.0.1 | -b 1024 | -t 120s | -w 25 | -l false] some_file.ext other_file2.ext some_directory_within_subdirectories
 ```
 
 ### Flags
@@ -38,5 +38,5 @@ relay send [-p 12345 | -i 127.0.0.1 | -b 1024 | -t 120 | -w 25 | -l false] some_
 
 ## Connect to the host to receive files
 ```
-relay receive -i 127.0.0.1 [-p 12345 | -b 1024 | -t 120 | -w 25 | -s /home | -l false]
+relay receive -i 127.0.0.1 [-p 12345 | -b 1024 | -t 120s | -w 25 | -s /home | -l false]
 ```

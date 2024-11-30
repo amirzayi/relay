@@ -3,8 +3,7 @@
 package host
 
 import (
-	"encoding/binary"
-	"encoding/json"
+	"encoding/gob"
 	"fmt"
 	"net"
 	"os"
@@ -82,20 +81,7 @@ func getFilesByPaths(paths ...string) (config.Files, error) {
 }
 
 func sendFilesInfo(conn net.Conn, files config.Files) error {
-	bytes, err := json.Marshal(files)
-	if err != nil {
-		return fmt.Errorf("failed to prepare transmit information, %v", err)
-	}
-
-	dataLen := uint32(len(bytes))
-	if err = binary.Write(conn, binary.BigEndian, dataLen); err != nil {
-		return fmt.Errorf("failed to write data size over network, %v", err)
-	}
-	if _, err = conn.Write(bytes); err != nil {
-		return fmt.Errorf("failed to write transmit information over network, %v", err)
-	}
-
-	return nil
+	return gob.NewEncoder(conn).Encode(files)
 }
 
 func sendFile(conn net.Conn, file config.File, fileID int, setting config.Setting) error {

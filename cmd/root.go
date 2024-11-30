@@ -12,12 +12,8 @@ var rootCmd = &cobra.Command{
 	Use:   "relay",
 	Short: "relay is an CLI application wich provide transfer files over network.",
 	Long: `relay is a CLI application for transferring files over network(local or global).
-This application will transfer folders within files as exists in source machine.
-credit: Amir Mirzaei
-mirzayi994@gmail.com
-https://github.com/AmirMirzayi
-https://www.linkedin.com/in/amir-mirzaei
-	`,
+This application will transfer folders within files as exists in source machine.`,
+	SilenceUsage: true,
 }
 
 func Execute() {

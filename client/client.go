@@ -3,8 +3,7 @@
 package client
 
 import (
-	"encoding/binary"
-	"encoding/json"
+	"encoding/gob"
 	"fmt"
 	"net"
 	"os"
@@ -72,20 +71,7 @@ func receiveFile(conn net.Conn, file config.File, fileID int, setting config.Set
 }
 
 func receiveFileInfo(conn net.Conn) (config.Files, error) {
-	var dataLen uint32
-	if err := binary.Read(conn, binary.BigEndian, &dataLen); err != nil {
-		return nil, fmt.Errorf("failed to read files info, %v", err)
-	}
-
-	buffer := make([]byte, dataLen)
-	if _, err := conn.Read(buffer); err != nil {
-		return nil, fmt.Errorf("failed to read files info, %v", err)
-	}
-
 	var files config.Files
-	if err := json.Unmarshal(buffer, &files); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal files info, %v", err)
-	}
-
-	return files, nil
+	err := gob.NewDecoder(conn).Decode(&files)
+	return files, err
 }
