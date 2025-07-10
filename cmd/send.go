@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/AmirMirzayi/relay/host"
+	"github.com/amirzayi/relay/host"
 	"github.com/spf13/cobra"
 )
 

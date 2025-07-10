@@ -4,7 +4,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/AmirMirzayi/relay/config"
+	"github.com/amirzayi/relay/config"
 	"github.com/spf13/cobra"
 )
 

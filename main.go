@@ -1,16 +1,25 @@
 package main
 
 import (
-	"fmt"
+	"embed"
+	"os"
 
-	"github.com/AmirMirzayi/relay/cmd"
+	"github.com/amirzayi/relay/cmd"
+	"github.com/amirzayi/relay/gui"
+)
+
+var (
+	//go:embed all:gui/frontend/dist
+	assets embed.FS
+
+	//go:embed gui/frontend/src/logo.png
+	icon []byte
 )
 
 func main() {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Printf("error occured: %v", r)
-		}
-	}()
-	cmd.Execute()
+	if len(os.Args) > 1 {
+		cmd.Execute()
+	} else {
+		gui.Start(assets, icon)
+	}
 }

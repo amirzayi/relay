@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AmirMirzayi/relay/config"
-	"github.com/AmirMirzayi/relay/utils"
+	"github.com/amirzayi/relay/config"
+	"github.com/amirzayi/relay/utils"
 )
 
 // Receive connects to a file transfer server at the specified IP and port to receive files.

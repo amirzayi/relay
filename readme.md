@@ -1,8 +1,11 @@
-relay is a simple command line file transfer over local or global network using tcp protocol.
-It don't require any dependencies and is not platform specific. It should work on linux, windows and macOS.
+relay is a file transfer over local or global network using tcp protocol.
+It requires webview dependency and is not platform specific.
 
 # INSTALLATION
-You can install this tool using go command `go install https://github.com/AmirMirzayi/relay` or download binary from [Releases](https://github.com/AmirMirzayi/relay/releases).
+You can install this tool using go command `go install https://github.com/amirzayi/relay` or download binary from [Releases](https://github.com/amirzayi/relay/releases).
+
+![Animated GIF](gui/sender.gif)
+![Animated GIF](gui/receiver.gif)
 
 # USAGE
 > [!IMPORTANT]

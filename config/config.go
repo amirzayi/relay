@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/AmirMirzayi/relay/utils"
+	"github.com/amirzayi/relay/utils"
 )
 
 const (
@@ -15,6 +15,9 @@ const (
 	DefaultBufferSize       = 1024 * 1024
 	DefaultProgressbarWidth = 25
 	DefaultSilent           = false
+
+	DefaultGUIPort    = "1112"
+	DefaultGUITimeout = time.Second
 )
 
 func DefaultIP() net.IP {
@@ -32,10 +35,10 @@ func DefaultDirectory() string {
 }
 
 type File struct {
-	Name    string   `json:"name"`
-	Size    int64    `json:"size"`
-	Path    string   `json:"-"`
-	Parents []string `json:"parents"`
+	Name    string
+	Size    int64
+	Path    string
+	Parents []string
 }
 
 type Files []File
