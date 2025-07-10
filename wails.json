@@ -1,7 +1,7 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
   "name": "relay-filesharing",
-  "outputfilename": "relay-filesharing",
+  "outputfilename": "relay",
   "frontend:install": "npm install",
   "frontend:dir": "gui/frontend",
   "frontend:build": "npm run build",

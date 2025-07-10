@@ -1,13 +1,15 @@
-relay is a file transfer over local or global network using tcp protocol.
+relay is a file transfer tool over local or global network using tcp protocol.
 It requires webview dependency and is not platform specific.
 
-# INSTALLATION
-You can install this tool using go command `go install https://github.com/amirzayi/relay` or download binary from [Releases](https://github.com/amirzayi/relay/releases).
+## INSTALLATION
+You can install this tool using go command `go install https://github.com/amirzayi/relay` or download standalone binary appropriate on your OS from [Releases](https://github.com/amirzayi/relay/releases).
 
+# GUI Mode
 ![Animated GIF](gui/sender.gif)
 ![Animated GIF](gui/receiver.gif)
 
-# USAGE
+# CLI Mode
+## USAGE
 > [!IMPORTANT]
 > Make sure application has privilege to connect to network and change filesystem.
 
@@ -17,8 +19,8 @@ You can install this tool using go command `go install https://github.com/amirza
 > [!NOTE]
 > Timeout flag receives s, m and h in given timeout format which are Second, Minute And Hour. For example: 72h3m0.5s is 72Hours and 3 Minutes and 0.5 Second.
 
-## Flags
-```
+### Flags
+```bash
 -h, --help                   help for relay
 -t, --timeout   duration     connection timeout (default 30s)
 -i, --ip        ip           sender machine binding ip address (default 0.0.0.0)
@@ -28,18 +30,18 @@ You can install this tool using go command `go install https://github.com/amirza
 -l, --silent    bool         silent transfer (default false)
 ```
 
-## Host serves to send files
+### Host serves to send files
 send command must have at least 1 argument which has file or directory path
-```
+```bash
 relay send [-p 12345 | -i 127.0.0.1 | -b 1024 | -t 120s | -w 25 | -l false] some_file.ext other_file2.ext some_directory_within_subdirectories
 ```
 
 ### Flags
-```
+```bash
 -s, --save string   files save path (default "/home/$(USER)/relay")
 ```
 
 ## Connect to the host to receive files
-```
+```bash
 relay receive -i 127.0.0.1 [-p 12345 | -b 1024 | -t 120s | -w 25 | -s /home | -l false]
 ```
