@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/amirzayi/relay/utils"
 )
 
 const (
@@ -16,8 +14,8 @@ const (
 	DefaultProgressbarWidth = 25
 	DefaultSilent           = false
 
-	DefaultGUIPort    = "1112"
-	DefaultGUITimeout = time.Second
+	LookupTimeout = time.Second
+	LookupPort    = 4444
 )
 
 func DefaultIP() net.IP {
@@ -32,25 +30,4 @@ func DefaultDirectory() string {
 	}
 	outputDir = filepath.Join(homeDir, outputDir)
 	return outputDir
-}
-
-type File struct {
-	Name    string
-	Size    int64
-	Path    string
-	Parents []string
-}
-
-type Files []File
-
-func (fs Files) TotalSize() (totalSize int64) {
-	for _, f := range fs {
-		totalSize += f.Size
-	}
-	return
-}
-
-func (fs Files) HumanReadableTotalSize() string {
-	totalSize := fs.TotalSize()
-	return utils.ConvertByteSizeToHumanReadable(float64(totalSize))
 }

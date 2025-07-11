@@ -10,7 +10,15 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
-func Start(assets embed.FS, icon []byte) {
+var (
+	//go:embed all:frontend/dist
+	assets embed.FS
+
+	//go:embed frontend/src/logo.png
+	icon []byte
+)
+
+func Start() {
 	app := NewApp()
 	host := NewHost()
 	client := NewSender()

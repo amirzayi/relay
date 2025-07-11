@@ -1,4 +1,4 @@
-export namespace config {
+export namespace fileutil {
 	
 	export class File {
 	    Name: string;
